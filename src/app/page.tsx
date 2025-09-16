@@ -1,103 +1,219 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [url, setUrl] = useState('');
+  const [shortUrl, setShortUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showRules, setShowRules] = useState(false);
+  const [rules, setRules] = useState<{[key: string]: {[key: string]: string}}>({});
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const addRule = () => {
+    const newRules = { ...rules };
+    const paramName = prompt('パラメータ名を入力してください（例: utm_source）:');
+    if (paramName) {
+      newRules[paramName] = {};
+      setRules(newRules);
+    }
+  };
+
+  const addRuleValue = (paramName: string) => {
+    const value = prompt('パラメータ値を入力してください（例: google）:');
+    const redirectUrl = prompt('リダイレクト先URLを入力してください:');
+    
+    if (value && redirectUrl) {
+      const newRules = { ...rules };
+      newRules[paramName][value] = redirectUrl;
+      setRules(newRules);
+    }
+  };
+
+  const removeRule = (paramName: string) => {
+    const newRules = { ...rules };
+    delete newRules[paramName];
+    setRules(newRules);
+  };
+
+  const removeRuleValue = (paramName: string, value: string) => {
+    const newRules = { ...rules };
+    delete newRules[paramName][value];
+    setRules(newRules);
+  };
+
+  const createShortUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!url) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          url, 
+          redirect_rules: Object.keys(rules).length > 0 ? rules : null 
+        }),
+      });
+      
+      const data = await response.json();
+      if (data.shortUrl) {
+        setShortUrl(data.shortUrl);
+      } else {
+        alert('エラー: ' + data.error);
+      }
+    } catch (error) {
+      alert('エラーが発生しました');
+    }
+    setLoading(false);
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(shortUrl);
+    alert('コピーしました！');
+  };
+
+  const generateExampleUrl = () => {
+    if (!shortUrl) return '';
+    
+    const firstParam = Object.keys(rules)[0];
+    if (firstParam) {
+      const firstValue = Object.keys(rules[firstParam])[0];
+      return `${shortUrl}?${firstParam}=${firstValue}`;
+    }
+    return shortUrl;
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full bg-white rounded-lg shadow-md p-6">
+        <h1 className="text-2xl font-bold text-center mb-6">
+          URL短縮サービス（パラメータ対応）
+        </h1>
+        
+        <form onSubmit={createShortUrl} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              デフォルトURL *
+            </label>
+            <input
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://example.com"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowRules(!showRules)}
+              className="text-blue-600 hover:text-blue-800 text-sm"
+            >
+              {showRules ? 'リダイレクトルールを隠す' : 'リダイレクトルールを設定（オプション）'}
+            </button>
+          </div>
+
+          {showRules && (
+            <div className="border border-gray-200 rounded-md p-4 bg-gray-50">
+              <h3 className="font-medium mb-3">リダイレクトルール</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                URLパラメータに基づいて異なるページにリダイレクトできます
+              </p>
+              
+              {Object.keys(rules).map(paramName => (
+                <div key={paramName} className="mb-4 p-3 bg-white rounded border">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium">パラメータ: {paramName}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeRule(paramName)}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      削除
+                    </button>
+                  </div>
+                  
+                  {Object.entries(rules[paramName]).map(([value, redirectUrl]) => (
+                    <div key={value} className="flex justify-between items-center mb-1 text-sm">
+                      <span>{value} → {redirectUrl}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeRuleValue(paramName, value)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  
+                  <button
+                    type="button"
+                    onClick={() => addRuleValue(paramName)}
+                    className="text-blue-600 hover:text-blue-800 text-sm"
+                  >
+                    + 値を追加
+                  </button>
+                </div>
+              ))}
+              
+              <button
+                type="button"
+                onClick={addRule}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm"
+              >
+                + パラメータを追加
+              </button>
+            </div>
+          )}
+          
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50"
           >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+            {loading ? '作成中...' : '短縮URLを作成'}
+          </button>
+        </form>
+
+        {shortUrl && (
+          <div className="mt-6 space-y-4">
+            <div className="p-4 bg-gray-100 rounded-md">
+              <p className="text-sm text-gray-600 mb-2">短縮URL:</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={shortUrl}
+                  readOnly
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-white"
+                />
+                <button
+                  onClick={copyToClipboard}
+                  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                >
+                  コピー
+                </button>
+              </div>
+            </div>
+
+            {Object.keys(rules).length > 0 && (
+              <div className="p-4 bg-blue-50 rounded-md">
+                <p className="text-sm text-blue-800 mb-2">使用例:</p>
+                <div className="space-y-1 text-sm">
+                  <div className="font-mono bg-white p-2 rounded border">
+                    {generateExampleUrl()}
+                  </div>
+                  <p className="text-gray-600">
+                    このURLにアクセスすると、パラメータに基づいて適切なページにリダイレクトされます
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
