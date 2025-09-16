@@ -9,8 +9,6 @@ export default async function RedirectPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   try {
-    console.log('Redirect attempt for:', params.shortCode);
-    
     // 短縮コードからリダイレクト情報を取得
     const { data, error } = await supabase
       .from('redirects')
@@ -19,11 +17,23 @@ export default async function RedirectPage({
       .eq('is_active', true)
       .single();
 
-    console.log('Supabase response:', { data, error });
-
     if (error || !data) {
-      console.log('No redirect found, redirecting to home');
-      redirect('/');
+      // デバッグ情報を表示
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8 text-center">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">リダイレクトエラー</h1>
+            <div className="text-left bg-gray-100 p-4 rounded mb-4">
+              <p><strong>Short Code:</strong> {params.shortCode}</p>
+              <p><strong>Error:</strong> {error?.message || 'No data found'}</p>
+              <p><strong>Data:</strong> {JSON.stringify(data)}</p>
+            </div>
+            <a href="/" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+              ホームに戻る
+            </a>
+          </div>
+        </div>
+      );
     }
 
     let targetUrl = data.original_url;
@@ -46,8 +56,6 @@ export default async function RedirectPage({
       }
     }
 
-    console.log('Redirecting to:', targetUrl);
-
     // クリック数を増加（シンプルな方法）
     await supabase
       .from('redirects')
@@ -57,7 +65,19 @@ export default async function RedirectPage({
     // 元のURLにリダイレクト
     redirect(targetUrl);
   } catch (error) {
-    console.error('Redirect error:', error);
-    redirect('/');
+    // エラー情報を表示
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8 text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">サーバーエラー</h1>
+          <div className="text-left bg-gray-100 p-4 rounded mb-4">
+            <p><strong>Error:</strong> {String(error)}</p>
+          </div>
+          <a href="/" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            ホームに戻る
+          </a>
+        </div>
+      </div>
+    );
   }
 }
