@@ -9,6 +9,8 @@ export default async function RedirectPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   try {
+    console.log('Redirect attempt for:', params.shortCode);
+    
     // 短縮コードからリダイレクト情報を取得
     const { data, error } = await supabase
       .from('redirects')
@@ -17,7 +19,10 @@ export default async function RedirectPage({
       .eq('is_active', true)
       .single();
 
+    console.log('Supabase response:', { data, error });
+
     if (error || !data) {
+      console.log('No redirect found, redirecting to home');
       redirect('/');
     }
 
@@ -41,6 +46,8 @@ export default async function RedirectPage({
       }
     }
 
+    console.log('Redirecting to:', targetUrl);
+
     // クリック数を増加（シンプルな方法）
     await supabase
       .from('redirects')
@@ -50,6 +57,7 @@ export default async function RedirectPage({
     // 元のURLにリダイレクト
     redirect(targetUrl);
   } catch (error) {
+    console.error('Redirect error:', error);
     redirect('/');
   }
 }
