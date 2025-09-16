@@ -9,20 +9,10 @@ export default async function RedirectPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   try {
-    // URLパラメータを取得
-    const urlParams = new URLSearchParams();
-    Object.entries(searchParams).forEach(([key, value]) => {
-      if (typeof value === 'string') {
-        urlParams.append(key, value);
-      } else if (Array.isArray(value)) {
-        value.forEach(v => urlParams.append(key, v));
-      }
-    });
-
     // 短縮コードからリダイレクト情報を取得
     const { data, error } = await supabase
       .from('redirects')
-      .select('original_url, redirect_rules')
+      .select('original_url, redirect_rules, click_count')
       .eq('short_code', params.shortCode)
       .eq('is_active', true)
       .single();
@@ -51,10 +41,10 @@ export default async function RedirectPage({
       }
     }
 
-    // クリック数を増加
+    // クリック数を増加（シンプルな方法）
     await supabase
       .from('redirects')
-      .update({ click_count: supabase.sql`click_count + 1` })
+      .update({ click_count: data.click_count + 1 })
       .eq('short_code', params.shortCode);
 
     // 元のURLにリダイレクト
