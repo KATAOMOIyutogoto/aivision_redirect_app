@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
 export default async function RedirectPage({ 
@@ -28,9 +29,9 @@ export default async function RedirectPage({
               <p><strong>Error:</strong> {error?.message || 'No data found'}</p>
               <p><strong>Data:</strong> {JSON.stringify(data)}</p>
             </div>
-            <a href="/" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            <Link href="/" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
               ホームに戻る
-            </a>
+            </Link>
           </div>
         </div>
       );
@@ -73,9 +74,9 @@ export default async function RedirectPage({
           <div className="text-left bg-gray-100 p-4 rounded mb-4">
             <p><strong>Error:</strong> {String(error)}</p>
           </div>
-          <a href="/" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          <Link href="/" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
             ホームに戻る
-          </a>
+          </Link>
         </div>
       </div>
     );
