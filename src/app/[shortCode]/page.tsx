@@ -19,7 +19,7 @@ export default async function RedirectPage({
       .single();
 
     if (error || !data) {
-      // デバッグ情報を表示
+      // デバッグ情報を表示（3秒後にホームにリダイレクト）
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8 text-center">
@@ -32,6 +32,9 @@ export default async function RedirectPage({
             <Link href="/" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
               ホームに戻る
             </Link>
+            <script dangerouslySetInnerHTML={{
+              __html: `setTimeout(() => { window.location.href = '/'; }, 3000);`
+            }} />
           </div>
         </div>
       );
@@ -66,7 +69,7 @@ export default async function RedirectPage({
     // 元のURLにリダイレクト
     redirect(targetUrl);
   } catch (error) {
-    // エラー情報を表示
+    // エラー情報を表示（3秒後にホームにリダイレクト）
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8 text-center">
@@ -77,6 +80,9 @@ export default async function RedirectPage({
           <Link href="/" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
             ホームに戻る
           </Link>
+          <script dangerouslySetInnerHTML={{
+            __html: `setTimeout(() => { window.location.href = '/'; }, 3000);`
+          }} />
         </div>
       </div>
     );
