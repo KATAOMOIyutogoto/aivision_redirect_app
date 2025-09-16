@@ -10,6 +10,12 @@ export default async function RedirectPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   try {
+    console.log('=== REDIRECT DEBUG START ===');
+    console.log('Short Code:', params.shortCode);
+    console.log('Search Params:', searchParams);
+    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+    console.log('Supabase Key exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+    
     // 短縮コードからリダイレクト情報を取得
     const { data, error } = await supabase
       .from('redirects')
@@ -18,8 +24,11 @@ export default async function RedirectPage({
       .eq('is_active', true)
       .single();
 
+    console.log('Supabase Query Result:', { data, error });
+    console.log('=== REDIRECT DEBUG END ===');
+
     if (error || !data) {
-      // デバッグ情報を表示（3秒後にホームにリダイレクト）
+      // デバッグ情報を表示
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8 text-center">
@@ -27,14 +36,14 @@ export default async function RedirectPage({
             <div className="text-left bg-gray-100 p-4 rounded mb-4">
               <p><strong>Short Code:</strong> {params.shortCode}</p>
               <p><strong>Error:</strong> {error?.message || 'No data found'}</p>
+              <p><strong>Error Code:</strong> {error?.code || 'N/A'}</p>
+              <p><strong>Error Details:</strong> {error?.details || 'N/A'}</p>
               <p><strong>Data:</strong> {JSON.stringify(data)}</p>
+              <p><strong>Supabase URL:</strong> {process.env.NEXT_PUBLIC_SUPABASE_URL}</p>
             </div>
             <Link href="/" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
               ホームに戻る
             </Link>
-            <script dangerouslySetInnerHTML={{
-              __html: `setTimeout(() => { window.location.href = '/'; }, 3000);`
-            }} />
           </div>
         </div>
       );
@@ -60,6 +69,8 @@ export default async function RedirectPage({
       }
     }
 
+    console.log('Target URL:', targetUrl);
+
     // クリック数を増加（シンプルな方法）
     await supabase
       .from('redirects')
@@ -69,20 +80,20 @@ export default async function RedirectPage({
     // 元のURLにリダイレクト
     redirect(targetUrl);
   } catch (error) {
-    // エラー情報を表示（3秒後にホームにリダイレクト）
+    console.error('=== REDIRECT ERROR ===', error);
+    // エラー情報を表示
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8 text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">サーバーエラー</h1>
           <div className="text-left bg-gray-100 p-4 rounded mb-4">
             <p><strong>Error:</strong> {String(error)}</p>
+            <p><strong>Error Type:</strong> {typeof error}</p>
+            <p><strong>Error Stack:</strong> {error instanceof Error ? error.stack : 'N/A'}</p>
           </div>
           <Link href="/" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
             ホームに戻る
           </Link>
-          <script dangerouslySetInnerHTML={{
-            __html: `setTimeout(() => { window.location.href = '/'; }, 3000);`
-          }} />
         </div>
       </div>
     );
